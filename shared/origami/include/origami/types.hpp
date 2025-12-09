@@ -325,6 +325,9 @@ struct config_t {
   /// Logger for analytical metrics
   mutable logger_t logger;
 
+  /// CMS kernel flag
+  bool cms_kernel = false;
+
   constexpr bool operator==(const config_t& o) const noexcept {
     return mt == o.mt && mi == o.mi && cache_hints_a == o.cache_hints_a &&
            cache_hints_b == o.cache_hints_b && workgroup_mapping == o.workgroup_mapping;
@@ -397,11 +400,66 @@ inline const runtime_options& get_runtime_options(const config_t& config) {
   return config.runtime_opts ? *config.runtime_opts : runtime_options::get();
 }
 
+/**
+ * @brief Struct to define CMS kernels.
+ *
+ * Contains the dimensions and data type of a matrix instruction.
+ */
+ struct CMS_kernel {
+  data_type_t mi_input_type;
+  transpose_t transA;
+  transpose_t transB;
+  size_t MT_M;
+  size_t MT_N;
+  size_t MT_K;
+
+  CMS_kernel()
+    : mi_input_type(data_type_t::Float)
+    , transA(transpose_t::N)
+    , transB(transpose_t::N)
+    , MT_M(0)
+    , MT_N(0)
+    , MT_K(0) {}
+
+  CMS_kernel(data_type_t mi_input_type, transpose_t transA, transpose_t transB, size_t MT_M, size_t MT_N, size_t MT_K)
+    : mi_input_type(mi_input_type)
+    , transA(transA)
+    , transB(transB)
+    , MT_M(MT_M)
+    , MT_N(MT_N)
+    , MT_K(MT_K) {}
+
+  std::string to_string() const {
+    return "CMS_kernel(mi_input_type=" + datatype_to_string(mi_input_type) + 
+              ", transA=" + std::string(transA == transpose_t::T ? "T" : "N") + 
+              ", transB=" + std::string(transB == transpose_t::T ? "T" : "N") + 
+              ", MT_M=" + std::to_string(MT_M) + 
+              ", MT_N=" + std::to_string(MT_N) + 
+              ", MT_K=" + std::to_string(MT_K) + ")";
+  }
+
+  bool operator==(const CMS_kernel& other) const {
+    return mi_input_type == other.mi_input_type && transA == other.transA && transB == other.transB &&
+           MT_M == other.MT_M && MT_N == other.MT_N && MT_K == other.MT_K;
+  }
+
+  std::size_t hash() const {
+    return std::hash<data_type_t>()(mi_input_type) ^ 
+            std::hash<size_t>()(static_cast<size_t>(transA)) ^ std::hash<size_t>()(static_cast<size_t>(transB)) ^ 
+            std::hash<size_t>()(MT_M) ^ std::hash<size_t>()(MT_N) ^ std::hash<size_t>()(MT_K);
+  }
+};
+
 }  // namespace origami
 
 // Specialization of std::hash in the std namespace for use of std::unordered_map with
-// matrix_instruction and config_t as keys.
+// CMS_kernel, matrix_instruction, and config_t as keys.
 namespace std {
+template <>
+struct hash<origami::CMS_kernel> {
+  std::size_t operator()(const origami::CMS_kernel& k) const { return k.hash(); }
+};
+
 template <>
 struct hash<origami::matrix_instruction> {
   std::size_t operator()(const origami::matrix_instruction& k) const { return k.hash(); }
