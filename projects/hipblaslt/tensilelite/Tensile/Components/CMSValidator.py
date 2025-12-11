@@ -354,6 +354,24 @@ class LocalRead(ValidatorInstruction):
         return message
 
 @dataclass
+class Pack(ValidatorInstruction):
+    name: str
+    num_vmfma: int
+    issued_at: int | float
+    needed_by: float = float('inf')
+    must_start_after: int | float = float('-inf')
+
+    def validate(self) -> str | None:
+        if self.must_start_after < self.issued_at < self.needed_by:
+            return None
+        
+        issued_at = floor(self.issued_at) % self.num_vmfma
+        needed_by = floor(self.needed_by) % self.num_vmfma
+        # TODO: How to handle the case where the Packed is needed by the next iteration?
+        return f"{self.name} at index {issued_at} is not valid. Packed at index {issued_at} is needed by index {needed_by}."
+
+
+@dataclass
 class GlobalRead(ValidatorInstruction):
     name: str
     num_vmfma: int
@@ -546,6 +564,13 @@ class Timeline:
 
                     global_read = GlobalRead(name=name, num_vmfma=self.num_vmfma, issued_at=idx_vmfma, swap_global_read_order=swap_global_read_order)
                     self._insert(idx_vmfma, global_read)
+            elif name.startswith("PackA") or name.startswith("PackB"):
+                packs = schedule_get(name, code_path, schedule_info)
+
+                for idx_pack, idx_vmfma in enumerate(packs):
+                    assert idx_vmfma >= -1, f"Code path {code_path}: Pack {name} at index {idx_pack} is not valid. Must be >= -1."
+                    pack = Pack(name=name, num_vmfma=self.num_vmfma, issued_at=idx_vmfma)
+                    self._insert(idx_vmfma, pack)
             else:
                 raise NotImplementedError(f"Instruction {name} not implemented")
     
@@ -772,6 +797,17 @@ def set_gr_needed_by_from_lrs(timeline: Timeline, swap_global_read_order: bool) 
             _, LR_target = target[0]
             for _, gr in grs:
                 gr.needed_by = LR_target.issued_at
+
+def hook_up_packs(timeline: Timeline) -> None:
+    """
+    TODO
+    """
+    # TODO: 1. Find mapping between LR and Pack
+    # TODO: 2. From mapping, updating Pack.needed_by to be the same as the LR.needed_by.
+    #       If multiple LRs, ensure they're  the same.
+    # TODO: 3. From mapping update Pack.must_start_after to be equal to LR.guaranteed_by.
+    #       If multiple for all LRs that map to the same Pack.
+    pass
 
 
 def validate_timeline(timeline: Timeline) -> str | None:
@@ -1026,6 +1062,26 @@ def verify_lrs_finished_before_vmfma(schedule_info: 'ScheduleInfo', context: dic
         return False, message
     return True, ""
 
+
+def verify_packs_start_and_end_at_correct_indices(schedule_info: 'ScheduleInfo', context: dict, code_path: int) -> tuple[bool, str]:
+    """
+    Ensure that the Packs start and end at the correct indices.
+    """
+    relevant_names = ["PackA", "PackB"]
+    kernel = context["kernel"]
+    timeline = Timeline(relevant_names, code_path, schedule_info, kernel)
+    
+    set_lr_needed_by_for_VMFMA(timeline, kernel)
+    hook_up_packs(timeline)
+    apply_swaits(timeline)
+    apply_barriers(timeline)
+
+    message = validate_timeline(timeline)
+    if message:
+        return False, message
+    return True, ""
+
+
 def verify_correct_number_of_instructions(schedule_info: 'ScheduleInfo', context: dict, code_path: int) -> tuple[bool, str]:
     """
     Verify that the number of instructions in the schedule is correct for a single code path.
@@ -1110,6 +1166,7 @@ def isValid(scheduleInfo: 'ScheduleInfo', context: dict) -> tuple[bool, str]:
         verify_correct_number_of_instructions,
         verify_ascending_order,
         verify_lrs_finished_before_vmfma,
+        verify_packs_start_and_end_at_correct_indices,
         verify_global_reads_not_too_early,
         verify_grs_finish_before_lrs,
         verify_scc_overlap,
