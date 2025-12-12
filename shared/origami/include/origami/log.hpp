@@ -116,6 +116,18 @@ class logger_t {
   }
 
   /**
+   * @brief Insert metrics from other logger into this logger.
+   */
+  void insert(const logger_t& other) {
+    if (this != &other) {
+      ensure_metrics();
+      if (other.metrics_) {
+        metrics_->insert(other.metrics_->begin(), other.metrics_->end());
+      }
+    }
+  }
+
+  /**
    * @brief Print all metrics as JSON to stdout.
    */
   void print() const;
