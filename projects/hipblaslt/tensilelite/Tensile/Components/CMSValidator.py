@@ -802,11 +802,24 @@ def hook_up_packs(timeline: Timeline) -> None:
     """
     TODO
     """
-    # TODO: 1. Find mapping between LR and Pack
-    # TODO: 2. From mapping, updating Pack.needed_by to be the same as the LR.needed_by.
-    #       If multiple LRs, ensure they're  the same.
-    # TODO: 3. From mapping update Pack.must_start_after to be equal to LR.guaranteed_by.
-    #       If multiple for all LRs that map to the same Pack.
+
+    for loop in timeline.loops:
+        # TODO: 0. Map Pack and LR names
+
+        # TODO: 1. Find mapping between LR and Pack
+        # Mapping between a given pack instructions and the LR's data that it packs.
+        # Can be:
+        # - 1 Pack  -> 1 LR
+        # - 1 Pack  -> N LRs
+        # - N Packs -> 1 LR
+        pack_to_lrs = defaultdict(list)
+    
+        # TODO: 2. From mapping, updating Pack.needed_by to be the same as the LR.needed_by.
+        #       If multiple LRs, ensure they're the same.
+
+
+        # TODO: 3. From mapping update Pack.must_start_after to be equal to LR.guaranteed_by.
+        #       If multiple for all LRs that map to the same Pack.
     pass
 
 
