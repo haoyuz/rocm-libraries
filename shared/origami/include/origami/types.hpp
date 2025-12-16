@@ -300,6 +300,9 @@ struct config_t {
   dim3_t mt{0, 0, 0};
   dim3_t mi{0, 0, 0};
 
+  /// Custom mainloop scheduling flag
+  bool custom_mainloop_scheduling = false;
+
   /// Occupancy (number of waves resident per CU).
   int occupancy = -1;
 
@@ -325,17 +328,22 @@ struct config_t {
   /// Logger for analytical metrics
   mutable logger_t logger;
 
-  /// CMS kernel flag
-  bool cms_kernel = false;
-
   constexpr bool operator==(const config_t& o) const noexcept {
-    return mt == o.mt && mi == o.mi && cache_hints_a == o.cache_hints_a &&
-           cache_hints_b == o.cache_hints_b && workgroup_mapping == o.workgroup_mapping;
+    return mt == o.mt && 
+           mi == o.mi && 
+           custom_mainloop_scheduling == o.custom_mainloop_scheduling && 
+           occupancy == o.occupancy &&
+           cache_hints_a == o.cache_hints_a &&
+           cache_hints_b == o.cache_hints_b && 
+           workgroup_mapping == o.workgroup_mapping &&
+           reduction_strategy == o.reduction_strategy &&
+           runtime_opts == o.runtime_opts;
   }
 
   std::size_t hash() const {
     return std::hash<size_t>()(mt.m) ^ std::hash<size_t>()(mt.n) ^ std::hash<size_t>()(mt.k) ^
            std::hash<size_t>()(mi.m) ^ std::hash<size_t>()(mi.n) ^ std::hash<size_t>()(mi.k) ^
+           std::hash<int>()(custom_mainloop_scheduling) ^ std::hash<int>()(occupancy) ^
            std::hash<int>()(cache_hints_a) ^ std::hash<int>()(cache_hints_b) ^
            std::hash<int>()(workgroup_mapping);
   }

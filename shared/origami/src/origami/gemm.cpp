@@ -837,12 +837,15 @@ double compute_tile_latency(const problem_t& problem,
 
   // 5)
   // 5-0) Look up main_loop_efficiency from hardware map
-  double main_loop_efficiency = hardware.get_adjusted_main_loop_efficiency(problem.a_transpose, 
-                                                                           problem.b_transpose, 
-                                                                           config.mt.m, 
-                                                                           config.mt.n, 
-                                                                           config.mt.k, 
-                                                                           problem.mi_dtype);
+  double main_loop_efficiency = 1.0;
+  if (config.custom_mainloop_scheduling) {
+    main_loop_efficiency = hardware.get_adjusted_main_loop_efficiency(problem.a_transpose, 
+                                                                      problem.b_transpose, 
+                                                                      config.mt.m, 
+                                                                      config.mt.n, 
+                                                                      config.mt.k, 
+                                                                      problem.mi_dtype);
+  }
   // 5-1) Single-tile latency (apply penalty after finding the bottleneck)
   double L_tile_single = (std::max(L_compute, L_mem) * main_loop_efficiency * effective_tile_penalty) + L_cvt;
   L_prologue *= effective_tile_penalty;
@@ -1057,9 +1060,11 @@ double compute_total_latency(const problem_t& problem,
 
   if (get_runtime_options(config).debug_enabled) {
     config.logger.log("Total_latency (with heuristics)", total_latency);
+    config.logger.log("custom_mainloop_scheduling", config.custom_mainloop_scheduling);
+    config.logger.log("kernel_occupancy", config.occupancy);
+    config.logger.log("workgroup_mapping", config.workgroup_mapping);
     config.logger.log("non_temporal_a", config.cache_hints_a);
     config.logger.log("non_temporal_b", config.cache_hints_b);
-    config.logger.log("kernel_occupancy", config.occupancy);
     config.logger.log("splitting_factor", splitting_factor);
     config.logger.log("Input Tile Size A", MT_M * MT_K);
     config.logger.log("Input Tile Size B", MT_N * MT_K);
