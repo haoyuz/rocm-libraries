@@ -53,4 +53,4 @@ target_link_libraries(
 )
 
 clang_tidy_check(hipdnn_sdk_tests)
-add_unit_test_target(hipdnn_sdk_tests ${CMAKE_CURRENT_BINARY_DIR})
+add_unclassified_test_target(hipdnn_sdk_tests ${CMAKE_CURRENT_BINARY_DIR})
