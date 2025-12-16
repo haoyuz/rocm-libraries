@@ -132,6 +132,7 @@ include(cmake/Tests.cmake)
 set(EXTRA_COMPILE_OPTIONS)
 set(EXTRA_LINK_OPTIONS)
 if(CODE_COVERAGE)
+    message(VERBOSE "Enabling compile flags for coverage-mapping")
     list(PREPEND EXTRA_COMPILE_OPTIONS -fprofile-instr-generate -fcoverage-mapping)
     list(PREPEND EXTRA_LINK_OPTIONS -fprofile-instr-generate -fcoverage-mapping)
 endif()
@@ -186,17 +187,7 @@ endif()
 
 # keep this after all build folder have been added so they have a chance to register their tests
 # using append_test_to_check_target
-
-if(NOT HIP_DNN_SKIP_TESTS)
-    create_test_name_validation_target()
-
-    finalize_custom_check_target()
-    finalize_unit_check_target()
-    finalize_integration_check_target()
-
-    add_dependencies(check validate_test_names)
-    add_dependencies(check_ctest validate_test_names)
-endif()
+finalize_test_targets()
 
 # keep this after all the targets have been added that could use the HIP language compiler.
 add_clang_tidy_custom_target()
@@ -236,6 +227,8 @@ if(CODE_COVERAGE)
 
     add_custom_target(
         code_coverage
+        COMMAND cd ${CMAKE_BINARY_DIR} && echo 'Finding .profraw files for coverage report:' && find
+                . -name \"*.profraw\"
         COMMAND cd ${CMAKE_BINARY_DIR} && find . -name \"*.profraw\" -print0 | xargs -0
                 ${LLVM_PROFDATA_BINARY} merge -sparse -o ./hipdnn.profdata
         COMMAND ${LLVM_COV_BINARY} report ${CODE_COVERAGE_OBJECTS} -instr-profile=./hipdnn.profdata
