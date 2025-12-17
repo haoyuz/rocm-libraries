@@ -14,9 +14,9 @@ target_link_libraries(tensilelite-client
         OpenMP::OpenMP_CXX
 )
 if(NOT WIN32)
-    find_package(amd_smi CONFIG REQUIRED)
+    find_package(amd_smi REQUIRED CONFIG PATHS /opt/rocm/cmake/amd_smi/)
 else()
-    find_package(amd_smi CONFIG)
+    find_package(amd_smi CONFIG PATHS /opt/rocm/cmake/amd_smi/)
 endif()
 if(amd_smi_FOUND)
     target_link_libraries(tensilelite-client PRIVATE amd_smi)
