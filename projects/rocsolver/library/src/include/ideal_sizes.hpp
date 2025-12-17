@@ -74,6 +74,16 @@
 #define GECON_BLOCKSIZE 1024
 #endif
 
+/******************************* lange ****************************************
+*******************************************************************************/
+#ifndef LANGE_THDS
+#define LANGE_THDS 1024
+#endif
+
+#ifndef LANGE_FROBENIUS_MAX_BDIM
+#define LANGE_FROBENIUS_MAX_BDIM 1024
+#endif
+
 /***************** geqr2/geqrf and geql2/geqlf ********************************
 *******************************************************************************/
 /*! \brief Determines the size of the block column factorized at each step
