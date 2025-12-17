@@ -3,6 +3,12 @@
 Documentation for hipFFT is available at
 [https://rocm.docs.amd.com/projects/hipFFT/en/latest/](https://rocm.docs.amd.com/projects/hipFFT/en/latest/).
 
+## hipFFT 1.0.22 (unreleased)
+
+### Resolved issues
+
+* Fixed potential launch failure of data generation kernels in test and benchmark programs.
+
 ## hipFFT 1.0.21 for ROCm 7.1.0
 
 ### Added

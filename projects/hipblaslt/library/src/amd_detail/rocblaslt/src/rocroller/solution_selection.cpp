@@ -34,7 +34,6 @@
 const int MAX_BITS_WORKGROUPTILE_M     = 8;
 const int MAX_BITS_WORKGROUPTILE_N     = 8;
 const int MAX_BITS_WORKGROUPTILE_K     = 7;
-const int MAX_BITS_PREFETCH_IN_FLIGHT  = 4;
 const int REQUIRED_MULTIPLE_M_N        = 16;
 const int REQUIRED_MULTIPLE_K          = 32;
 const int USE_WORKGROUP_MAPPING_K_SIZE = 4096;
@@ -81,16 +80,6 @@ const int USE_WORKGROUP_MAPPING_K_SIZE = 4096;
     {16, 16, 256},
     {16, 64, 256}
 }};
-
-constexpr int preferredUnrolling(rocRoller::DataType typeA, rocRoller::DataType typeB, WorkGroupTileSize wgt) {
-    // Other datatypes run out of registers when prefetchInFlight is too
-    // large.
-    // There is an error with smaller tile sizes and larger prefetchInFlight.
-    if (typeA == rocRoller::DataType::FP4 && typeB == rocRoller::DataType::FP4 && wgt.m > 32 && wgt.n > 32)
-        return 4;
-    else
-        return 2;
-}
 
 template <rocRoller::DataType typeA, rocRoller::DataType typeB>
 constexpr auto generateTileList() {
@@ -210,7 +199,7 @@ std::vector<SolutionIndexParameters> chooseSolutionIndexParameters(
         elementSizeB_bits,
         elementSizeC_bits,
         dataType,
-        kernelType.scaleABlockRowSize * kernelType.scaleABlockColSize, //Handle A vs B block size.
+        kernelType.scaleTypeA.blockRowSize * kernelType.scaleTypeA.blockColSize, //Handle A vs B block size.
         0.8,
         false,
         WGM);
@@ -241,17 +230,21 @@ std::vector<SolutionIndexParameters> chooseSolutionIndexParameters(
                    || !std::has_single_bit(static_cast<uint>(wgt.n))))
                 continue;
 
-            params.push_back({wgt, 1, true});
-            while (unrollAmount > 1 && (prob.k % (wgt.k * unrollAmount) != 0))
-            {
-                unrollAmount = unrollAmount / 2;
-            }
-
-            params.back().prefetchInFlight = unrollAmount;
+            params.push_back({wgt, true, false});
 
             if (prob.k < USE_WORKGROUP_MAPPING_K_SIZE)
             {
                 params.back().workgroupMapping = false;
+            }
+
+            // Enable StreamK when number of output tiles < number of CUs and not f6 data type
+            size_t numTilesM = prob.m / wgt.m;
+            size_t numTilesN = prob.n / wgt.n;
+            size_t numTiles = numTilesM * numTilesN * prob.batch_count;
+            auto isF6 = (kernelType.typeA == rocRoller::DataType::FP6 || kernelType.typeA == rocRoller::DataType::BF6 || kernelType.typeB == rocRoller::DataType::FP6 || kernelType.typeB == rocRoller::DataType::BF6);
+            if(numTiles < analaytical_hardware.N_CU && !isF6)
+            {
+                params.back().streamK = true;
             }
         }
     }
@@ -270,9 +263,9 @@ int parametersToIndex(const SolutionIndexParameters& params)
     pos += MAX_BITS_WORKGROUPTILE_N;
     result |= ((params.workgroupTile.m / REQUIRED_MULTIPLE_M_N) << pos);
     pos += MAX_BITS_WORKGROUPTILE_M;
-    result |= (params.prefetchInFlight << pos);
-    pos += MAX_BITS_PREFETCH_IN_FLIGHT;
     result |= ((params.workgroupMapping ? 1 : 0) << pos);
+    pos += 1;
+    result |= ((params.streamK ? 1 : 0) << pos);
 
     // Set top bit indicating it is a rocRoller index
     result |= (1 << 31);
@@ -301,9 +294,9 @@ SolutionIndexParameters indexToParameters(int index)
     result.workgroupTile.m
         = ((index >> pos) & mask(MAX_BITS_WORKGROUPTILE_M)) * REQUIRED_MULTIPLE_M_N;
     pos += MAX_BITS_WORKGROUPTILE_M;
-    result.prefetchInFlight = (index >> pos) & mask(MAX_BITS_PREFETCH_IN_FLIGHT);
-    pos += MAX_BITS_PREFETCH_IN_FLIGHT;
     result.workgroupMapping = (index >> pos) & 1;
+    pos += 1;
+    result.streamK = (index >> pos) & 1;
 
     return result;
 }

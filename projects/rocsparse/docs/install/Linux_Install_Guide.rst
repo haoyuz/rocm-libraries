@@ -151,6 +151,7 @@ the library, dependencies, and clients are listed in the table below.
    "``./install.sh -ic``", "Build the library and client, then build and install the rocSPARSE package in ``opt/rocm/rocsparse``. The script prompts you for ``sudo`` access. This installs rocSPARSE for all users."
    "``./install.sh -idc -a gfx908``", "Build the library specifically for the gfx908 architecture, build the dependencies and client, then build and install the rocSPARSE package in ``/opt/rocm/rocsparse``. The script prompts you for ``sudo`` access. This installs rocSPARSE for all users."
    "``./install.sh -ic -a gfx908``", "Build the library specifically for the gfx908 architecture, build the client, then build and install the rocSPARSE package in ``opt/rocm/rocsparse``. The script prompts you for ``sudo`` access. This installs rocSPARSE for all users."
+   "``./install.sh -o``", "Build the client executables using an already installed version of the library."
 
 Building rocSPARSE using individual make commands
 -------------------------------------------------
@@ -230,3 +231,29 @@ after successfully compiling the library with the clients.
 
       # Execute rocSPARSE example
       ./example_csrmv 1000
+
+For more comprehensive testing, you can run the entire unit test suite using the command:
+
+.. code-block:: shell
+
+      # Navigate to clients binary directory
+      cd build/release/clients/staging
+
+      # Execute rocSPARSE example
+      ./rocsparse-test
+
+For more focused testing, you can run a specific test by running the following command:
+
+.. code-block:: shell
+
+      # Navigate to clients binary directory
+      cd build/release/clients/staging
+
+      # Execute rocSPARSE example
+      ./rocsparse-test --gtest_filter=TestName
+
+.. warning::
+
+   The unit test suite is a comprehensive test of the rocSPARSE library and takes multiple hours to finish. Consider running 
+   more focused tests for quicker feedback.
+

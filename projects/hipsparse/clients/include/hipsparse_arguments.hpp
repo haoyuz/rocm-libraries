@@ -71,6 +71,8 @@ struct Arguments
     double betai;
     double threshold;
     double percentage;
+    double c;
+    double s;
 
     hipsparseOperation_t transA;
     hipsparseOperation_t transB;
@@ -107,6 +109,7 @@ struct Arguments
     double boostval;
     double boostvali;
 
+    int slice_size;
     int ell_width;
     int permute;
     int gtsv_alg;
@@ -148,6 +151,8 @@ struct Arguments
         this->betai      = 0.0;
         this->threshold  = 0.0;
         this->percentage = 0.0;
+        this->c          = 1.0;
+        this->s          = 1.0;
 
         this->transA = HIPSPARSE_OPERATION_NON_TRANSPOSE;
         this->transB = HIPSPARSE_OPERATION_NON_TRANSPOSE;
@@ -184,10 +189,11 @@ struct Arguments
         this->boostval     = 1.0;
         this->boostvali    = 0.0;
 
-        this->ell_width = 0;
-        this->permute   = 0;
-        this->gtsv_alg  = 0;
-        this->gpsv_alg  = 0;
+        this->slice_size = 2;
+        this->ell_width  = 0;
+        this->permute    = 0;
+        this->gtsv_alg   = 0;
+        this->gpsv_alg   = 0;
 
         this->unit_check = 1;
         this->timing     = 0;
@@ -281,6 +287,8 @@ struct Arguments
         HIPSPARSE_FORMAT_CHECK(betai);
         HIPSPARSE_FORMAT_CHECK(threshold);
         HIPSPARSE_FORMAT_CHECK(percentage);
+        HIPSPARSE_FORMAT_CHECK(c);
+        HIPSPARSE_FORMAT_CHECK(s);
         HIPSPARSE_FORMAT_CHECK(transA);
         HIPSPARSE_FORMAT_CHECK(transB);
         HIPSPARSE_FORMAT_CHECK(baseA);
@@ -311,6 +319,7 @@ struct Arguments
         HIPSPARSE_FORMAT_CHECK(boosttol);
         HIPSPARSE_FORMAT_CHECK(boostval);
         HIPSPARSE_FORMAT_CHECK(boostvali);
+        HIPSPARSE_FORMAT_CHECK(slice_size);
         HIPSPARSE_FORMAT_CHECK(ell_width);
         HIPSPARSE_FORMAT_CHECK(permute);
         HIPSPARSE_FORMAT_CHECK(gtsv_alg);
@@ -421,6 +430,8 @@ private:
         print("betai", arg.betai);
         print("threshold", arg.threshold);
         print("percentage", arg.percentage);
+        print("c", arg.c);
+        print("s", arg.s);
         print("transA", hipsparse_operation2string(arg.transA));
         print("transB", hipsparse_operation2string(arg.transB));
         print("baseA", hipsparse_indexbase2string(arg.baseA));
@@ -460,6 +471,7 @@ private:
         print("boosttol", arg.boosttol);
         print("boostval", arg.boostval);
         print("boostvali", arg.boostvali);
+        print("slice_size", arg.slice_size);
         print("ell_width", arg.ell_width);
         print("permute", arg.permute);
         print("gtsv_alg", arg.gtsv_alg);

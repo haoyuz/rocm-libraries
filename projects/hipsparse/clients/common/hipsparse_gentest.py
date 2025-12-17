@@ -97,7 +97,6 @@ def process_doc(doc):
 
     # Instantiate all of the tests, starting with defaults
     for test in doc['Tests']:
-        print(test)
         case = defaults.copy()
         case.update(test)
         generate(case, instantiate)
@@ -407,7 +406,7 @@ def generate(test, function):
                     #
                     if ((not os.path.isdir(filename_arg))
                         and (not glob.glob(filename_arg))
-                        and (not glob.glob(filename_arg + ".bin"))):
+                        and (not glob.glob(filename_arg + ".csr"))):
                         print("skip unrecognized filename, directory or filename glob expression: '" + test[key] + "'")
                     else:
                         cleanlist.append(test[key])
@@ -440,7 +439,7 @@ def generate(test, function):
                         #
                         names = glob.glob(filename_arg)
                         if not names:
-                            names = glob.glob(filename_arg + ".bin")
+                            names = glob.glob(filename_arg + ".csr")
                             generate(test,function)
 
                         else:

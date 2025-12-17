@@ -1,5 +1,5 @@
+// Copyright (c) Advanced Micro Devices, Inc., or its affiliates.
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2025, Advanced Micro Devices, Inc. All rights reserved.
 
 #include <iostream>
 #include <numeric>
@@ -177,12 +177,12 @@ bool profile_grouped_conv_bwd_data_impl(int do_verification,
                 in_device_buf.FromDevice(in_device.mData.data());
 
                 using ComputeType_ = std::conditional_t<sizeof(OutDataType) < sizeof(WeiDataType),
-                                                        OutDataType,
-                                                        WeiDataType>;
+                                                             OutDataType,
+                                                             WeiDataType>;
                 using ComputeType =
                     std::conditional_t<sizeof(ComputeType_) < sizeof(ComputeDataType),
-                                       ComputeType_,
-                                       ComputeDataType>;
+                                            ComputeType_,
+                                            ComputeDataType>;
                 using AccDataType =
                     std::conditional_t<std::is_same_v<ComputeType, int8_t>, int32_t, float>;
                 const index_t num_accums = conv_param.K_;

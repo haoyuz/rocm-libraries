@@ -34,13 +34,13 @@ typedef std::tuple<base, std::string> csrilusv_bin_tuple;
 
 base csrilusv_idxbase_range[] = {HIPSPARSE_INDEX_BASE_ZERO, HIPSPARSE_INDEX_BASE_ONE};
 
-std::string csrilusv_bin[] = {"scircuit.bin",
+std::string csrilusv_bin[] = {"scircuit.csr",
 #if defined(__HIP_PLATFORM_AMD__)
-                              //                              "bmwcra_1.bin",
-                              "nos1.bin",
+                              //                              "bmwcra_1.csr",
+                              "nos1.csr",
 #endif
-                              "nos6.bin",
-                              "amazon0312.bin"};
+                              "nos6.csr",
+                              "amazon0312.csr"};
 
 class parameterized_csrilusv_bin : public testing::TestWithParam<csrilusv_bin_tuple>
 {
@@ -62,7 +62,7 @@ Arguments setup_csrilusv_arguments(csrilusv_bin_tuple tup)
     std::string bin_file = std::get<1>(tup);
 
     // Matrices are stored at the same path in matrices directory
-    arg.set_filename(get_filename(bin_file));
+    arg.set_filename(bin_file);
 
     return arg;
 }
@@ -72,16 +72,14 @@ TEST_P(parameterized_csrilusv_bin, csrilusv_bin_float)
 {
     Arguments arg = setup_csrilusv_arguments(GetParam());
 
-    hipsparseStatus_t status = testing_csrilusv<float>(arg);
-    EXPECT_EQ(status, HIPSPARSE_STATUS_SUCCESS);
+    testing_csrilusv<float>(arg);
 }
 
 TEST_P(parameterized_csrilusv_bin, csrilusv_bin_double)
 {
     Arguments arg = setup_csrilusv_arguments(GetParam());
 
-    hipsparseStatus_t status = testing_csrilusv<double>(arg);
-    EXPECT_EQ(status, HIPSPARSE_STATUS_SUCCESS);
+    testing_csrilusv<double>(arg);
 }
 
 INSTANTIATE_TEST_SUITE_P(csrilusv_bin,
